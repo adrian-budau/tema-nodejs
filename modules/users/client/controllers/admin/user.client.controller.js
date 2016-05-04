@@ -39,6 +39,8 @@
       var user = vm.user;
 
       user.$update(function () {
+        if (user._id === Authentication.user._id)
+          Authentication.user = user;
         $state.go('admin.user', {
           userId: user._id
         });

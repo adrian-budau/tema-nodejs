@@ -10,6 +10,7 @@ exports.renderIndex = function (req, res) {
   var safeUserObject = null;
   if (req.user) {
     safeUserObject = {
+      _id: req.user._id,
       displayName: validator.escape(req.user.displayName),
       provider: validator.escape(req.user.provider),
       username: validator.escape(req.user.username),
@@ -19,6 +20,7 @@ exports.renderIndex = function (req, res) {
       email: validator.escape(req.user.email),
       lastName: validator.escape(req.user.lastName),
       firstName: validator.escape(req.user.firstName),
+      money: req.user.money,
       additionalProvidersData: req.user.additionalProvidersData
     };
   }
