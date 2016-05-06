@@ -1,0 +1,35 @@
+<section>
+  <div class="page-header">
+      <div class="row">
+        <div class="col-md-4">
+          <h1 ng-bind="vm.game.title"></h1>
+        </div>
+        <div class="col-md-4">
+            <a ng-show="!vm.spectating()" ng-click="vm.leave()" class="btn btn-danger text-center center-block" style="margin-top: 2em;">Leave</a>
+        </div>
+        <div class="col-md-4" style="margin-top: 2em">
+            <p ng-hide="vm.game.users.length" class="list-group-item-text pull-right small">No players in this room </p>
+            <p class="list-group-item-text pull-right small">
+                <span>Players:&nbsp;</span>
+                <span ng-repeat="user in vm.game.users">
+                    <span ng-bind="user.username"></span> &nbsp;
+                </span>
+            </p>
+            <BR>
+            <p class="list-group-item-text pull-right small" ng-show="vm.game.spectators.length">
+                <span>Spectators:&nbsp;</span>
+                <span ng-repeat="user in vm.game.spectators">
+                    <span ng-bind="user.username"></span> &nbsp;
+                </span>
+            </p>
+            <p ng-hide="vm.game.spectators.length" class="list-group-item-text pull-right small">No spectators in this room </p>
+
+        </div>
+    </div>
+  </div>
+  <div class="col-md-12">
+    {{vm.spectating() ? "Spectating" : "In Room"}}
+    <BR/>
+    {{vm.playing() ? "Playing" : "Not Playing"}}
+  </div>
+</section>
