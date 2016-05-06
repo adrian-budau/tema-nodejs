@@ -1,0 +1,29 @@
+<section>
+  <div class="page-header">
+    <div class="row">
+      <div class="col-md-4">
+        <h1>Games</h1>
+      </div>
+      <div class="col-md-4" style="margin-top: 2em">
+        <input class="form-control col-md-4" type="text" ng-model="vm.search" placeholder="Search" ng-change="vm.figureOutItemsToDisplay()" />
+      </div>
+      <div class="col-md-2" style="margin-top: 2em" ng-if="vm.admin">
+          <a class="btn btn-success btn-large" ui-sref="game.create">Add Game Room</a>
+      </div>
+    </div>
+  </div>
+  <div ng-show="vm.error" class="text-danger">
+    <strong ng-bind="vm.error"></strong>
+  </div>
+  <div class="list-group">
+    <div ng-repeat="game in vm.pagedItems" ng-click="vm.spectate({gameId: game._id})" class="game-list-item list-group-item clearfix">
+      <h4 class="list-group-item-heading" ng-bind="game.title"></h4>
+      <p ng-repeat="user in game.users" class="list-group-item-text pull-right small" ng-bind="user.username"></p>
+      <p ng-hide="game.users.length" class="list-group-item-text pull-right small">No users in this room </p>
+      <p ng-show="game.currentGame" class="list-group-item-text pull-left" style="margin-top: 0.5em">Maximum bid: {{vm.game.currentGame.currentBid()}}</p>
+      <p ng-hide="game.currentGame" class="list-group-item-text pull-left" style="margin-top: 0.5em">No game currently running</p>
+      <a class="btn btn-info pull-left" ng-click="vm.join({gameId: game._id}); $event.stopPropagation();" style="margin-left: 1em;">Join</a>
+    </div>
+  </div>
+  <uib-pagination boundary-links="true" max-size="8" items-per-page="vm.itemsPerPage" total-items="vm.filterLength" ng-model="vm.currentPage" ng-change="vm.pageChanged()"></uib-pagination>
+</section>
