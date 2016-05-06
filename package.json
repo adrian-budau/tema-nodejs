@@ -34,6 +34,7 @@
     "crypto": "0.0.3",
     "express": "~4.13.4",
     "express-session": "~1.13.0",
+    "es6-set": "~0.1.4",
     "file-stream-rotator": "~0.0.6",
     "forever": "~0.15.1",
     "generate-password": "~1.1.1",
