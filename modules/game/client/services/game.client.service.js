@@ -23,4 +23,14 @@
       }
     });
   }
+
+  UserGameService.$inject = ['$resource'];
+
+  function UserGameService($resource) {
+    return $resource('api/game/me', {}, {
+      get: {
+        method: 'GET'
+      }
+    });
+  }
 }());
