@@ -16,6 +16,7 @@
     vm.playing = playing;
     vm.leave = leave;
     vm.ready = ready;
+    vm.bidding = bidding;
 
     init();
 
@@ -123,6 +124,13 @@
           return true;
       }
       return false;
+    }
+
+    function bidding() {
+      if (!playing())
+        return false;
+      var currentUser = vm.game.currentGame.users[vm.game.currentGame.index].user;
+      return currentUser._id === Authentication.user._id;
     }
 
     function leave() {

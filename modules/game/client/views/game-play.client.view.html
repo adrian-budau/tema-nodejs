@@ -35,8 +35,25 @@
     </div>
   </div>
   <div class="col-md-12">
-    {{vm.spectating() ? "Spectating" : "In Room"}}
-    <BR/>
-    {{vm.playing() ? "Playing" : "Not Playing"}}
+      <div class="col-md-12">
+          {{vm.spectating() ? "Spectating" : "In Room"}}
+          <BR/>
+          {{vm.playing() ? "Playing" : "Not Playing"}}
+      </div>
+    <div class="col-md-10">
+    </div>
+    <div class="col-md-2">
+        <div ng-show="vm.bidding()">
+            <div class="input-group">
+                <input type="number" ng-model="bidAmount" class="form-control" placeholder="Bid Amount">
+                <span class="input-group-addon">$</span>
+            </div>
+            <a class="btn btn-success col-md-12 poker-button" ng-click="vm.raisePoker()">Raise</a>
+            <a class="btn btn-success col-md-12 poker-button" ng-show="vm.canCheck()" ng-click="vm.checkPoker()">Check</a>
+            <a class="btn btn-success disabled col-md-12 poker-button" disabled ng-hide="vm.canCheck()">Check</a>
+            <a class="btn btn-info col-md-12 poker-button" ng-click="vm.callPoker()">Call</a>
+            <a class="btn btn-danger col-md-12 poker-button" ng-click="vm.fold()">Fold</a>
+        </div>
+    </div>
   </div>
 </section>
