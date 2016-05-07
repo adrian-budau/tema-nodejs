@@ -2,6 +2,7 @@ var path = require('path'),
   mongoose = require('mongoose'),
   _ = require('lodash'),
   Game = mongoose.model('Game'),
+  User = mongoose.model('User'),
   errorHandler = require(path.resolve('./modules/core/server/controllers/errors.server.controller')),
   Events = require('../include/events.server.include.js');
 
@@ -27,14 +28,13 @@ exports.list = function (req, res) {
  * Game param middleware
  */
 exports.gameById = function (req, res, next, id) {
-
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).send({
       message: 'Game id is invalid  '
     });
   }
 
-  Game.findById(id).populate('users spectators').exec(function (err, game) {
+  Game.findById(id).deepPopulate('users spectators currentGame.users.user').exec(function (err, game) {
     if (err) {
       return next(err);
     } else if (!game) {
@@ -42,7 +42,7 @@ exports.gameById = function (req, res, next, id) {
         message: 'No game with that identifier has been found'
       });
     }
-    game.hideImportant(req.user && req.user._id);
+
     req.game = game;
     next();
   });
@@ -66,6 +66,7 @@ exports.create = function (req, res) {
 };
 
 exports.read = function(req, res) {
+  req.game.hideImportant();
   res.json(req.game);
 };
 
@@ -77,8 +78,8 @@ exports.join = function(req, res) {
       if (req.game.users.length === 6) {
         res.json({ full: true });
       } else {
-        req.game.users = _.union(_.map(req.game.users || [], function(user) {
-          return user.id;
+        req.game.users = _.unionWith(_.map(req.game.users || [], function(user) {
+          return user._id;
         }), [req.user._id]);
 
         req.game.save(function() {

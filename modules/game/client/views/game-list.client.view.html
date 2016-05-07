@@ -18,7 +18,7 @@
   <div class="list-group">
     <div ng-repeat="game in vm.pagedItems" ng-click="vm.spectate({gameId: game._id})" class="game-list-item list-group-item clearfix">
       <h4 class="list-group-item-heading" ng-bind="game.title"></h4>
-      <p class="list-group-item-text pull-right small">
+      <p class="list-group-item-text pull-right small" ng-show="game.users.length">
           <span>Players:&nbsp;</span>
           <span ng-repeat="user in game.users">
               <span ng-bind="user.username"></span> &nbsp;

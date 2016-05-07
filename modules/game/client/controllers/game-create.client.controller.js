@@ -5,13 +5,13 @@
     .module('game')
     .controller('GameCreateController', GameCreateController);
 
-  GameCreateController.$inject = ['$scope', '$state', 'GameService', 'Authentication'];
+  GameCreateController.$inject = ['$scope', '$state', 'GameListService', 'Authentication'];
 
-  function GameCreateController($scope, $state, GameService, Authentication) {
+  function GameCreateController($scope, $state, GameListService, Authentication) {
     var vm = this;
 
     vm.authentication = Authentication;
-    vm.game = new GameService();
+    vm.game = new GameListService();
     vm.error = null;
     vm.form = {};
     vm.create = create;

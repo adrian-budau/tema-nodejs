@@ -56,7 +56,21 @@
         }
 
         if (message.action === "readyToPlay") {
+          GameService.get({
+            gameId: vm.game._id
+          }).$promise.then(function(game) {
+            vm.game = game;
+          });
           vm.readyButton = 'show';
+        }
+
+        if (message.action === "gameStarted") {
+          GameService.get({
+            gameId: vm.game._id
+          }).$promise.then(function(game) {
+            vm.game = game;
+          });
+          vm.readyButton = null;
         }
       });
 
@@ -94,17 +108,20 @@
 
     function spectating() {
       for (var i = 0; i < vm.game.users.length; ++i)
-        if (vm.game.users[i].id === Authentication.user._id)
+        if (vm.game.users[i]._id === Authentication.user._id)
           return false;
       return true;
     }
 
     function playing() {
+      console.log(vm.game);
       if (!vm.game.currentGame)
         return false;
-      for (var i = 0; i < vm.game.currentGame.users.length; ++i)
-        if (vm.game.currentGame.users[i].id === Authentication.user._id)
+      for (var i = 0; i < vm.game.currentGame.users.length; ++i) {
+        console.log(String(vm.game.currentGame.users[i].user._id), String(Authentication.user._id));
+        if (String(vm.game.currentGame.users[i].user._id) === String(Authentication.user._id))
           return true;
+      }
       return false;
     }
 
@@ -122,6 +139,11 @@
 
     function ready() {
       vm.readyButton = 'pressed';
+      Socket.emit('pokerAction', {
+        id: game._id,
+        action: 'ready',
+        created: Date.now()
+      });
     }
   }
 }());

@@ -8,6 +8,7 @@ var addListener = Events.addListener,
   removeListener = Events.removeListener,
   callCallback = Events.callCallback,
   goUpdate = Events.goUpdate;
+var Rooms = require('../include/room.server.include.js');
 
 // Create the chat configuration
 module.exports = function (io, socket) {
@@ -62,6 +63,8 @@ module.exports = function (io, socket) {
     }
 
     if (message.action === 'ready') {
+      Rooms.readyFor(gameId, socket.request.user._id);
+      return;
     }
   });
 
@@ -84,7 +87,7 @@ module.exports = function (io, socket) {
     // first remove as spectator
     var gameId = roomListener.gameId;
     Game.findById(gameId, function (err, game) {
-      if (err) {
+      if (err || !game) {
         caseError(err);
         return;
       }

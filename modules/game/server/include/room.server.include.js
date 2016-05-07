@@ -1,7 +1,7 @@
 var Events = require('./events.server.include.js');
 var mongoose = require('mongoose');
 var Game = mongoose.model('Game');
-var SingleGameSchema = mongoose.model('SingleGameSchema');
+var SingleGame = mongoose.model('SingleGame');
 var _ = require('lodash');
 
 var roomCount = {};
@@ -26,14 +26,29 @@ function setUpRooms() {
 
 function nextPhase(roomId) {
   return function() {
-    Game.findOne({ _id: roomId }).then(function(game) {
+    Game.findOne({ _id: roomId }).deepPopulate('users spectators currentGame.users.user').then(function(game) {
       if (!game.currentGame) { // we're in ready phase
-        if (roomReady[roomId].length > 1) { // wee, we can start
-          
+        var readyUsers = _.map(roomReady[roomId] || [], String);
+        var gameUsers = _.map(game.users, function (user) {
+          return String(user._id);
+        });
+        roomReady[roomId] = [];
+
+        if (_.intersection(readyUsers, gameUsers).length > 1) { // wee, we can start
+          try {
+            game.currentGame = SingleGame.createGame(_.intersection(readyUsers, gameUsers));
+          } catch (err) {
+            console.log("weird error: ", err);
+          }
+
+          game.save(function() {
+            return Events.emit(game._id, {
+              action: 'gameStarted',
+              created: Date.now()
+            });
+          });
         } else {
-          console.log("Let's try to see if people are ready in ", game.title);
           if (game.users.length < 2) { // do nothing, can't play poker with only one player
-            console.log("Too few people in ", game.title);
             return;
           }
           return Events.emit(game._id, {
@@ -48,8 +63,9 @@ function nextPhase(roomId) {
 
 function startRoom(roomId) {
   Events.emitter.on(roomId, updateRoom);
-  roomTimer[roomId] = setInterval(nextPhase(roomId), 15000);
+  roomTimer[roomId] = setInterval(nextPhase(roomId), 5000);
 }
+
 module.exports = {
   startRoom: startRoom,
   closeRoom: function(roomId) {
@@ -59,5 +75,9 @@ module.exports = {
   hasStartedOn: function(roomId) {
     return Events.emitter.listenerCount(roomId) > 0;
   },
-  setUpRooms: setUpRooms
+  setUpRooms: setUpRooms,
+  readyFor: function (roomId, userId) {
+    roomReady[roomId] = roomReady[roomId] || [];
+    roomReady[roomId] = _.union(roomReady[roomId], [userId]);
+  }
 };

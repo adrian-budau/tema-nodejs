@@ -49,6 +49,7 @@
     "gulp-wiredep": "~0.0.0",
     "mocha": "~2.4.5",
     "mongoose": "~4.4.8",
+    "mongoose-deep-populate": "~3.0.0",
     "morgan": "~1.7.0",
     "multer": "~1.1.0",
     "nodemailer": "~2.3.0",
