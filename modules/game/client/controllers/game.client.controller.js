@@ -17,6 +17,7 @@
     vm.leave = leave;
     vm.ready = ready;
     vm.bidding = bidding;
+    vm.canCheck = canCheck;
 
     init();
 
@@ -152,6 +153,17 @@
         action: 'ready',
         created: Date.now()
       });
+    }
+
+    function canCheck() {
+      if (!bidding())
+        return false;
+      var myBid = vm.game.currentGame.users[vm.game.currentGame.index].bid;
+      var myMoney = vm.game.currentGame.users[vm.game.currentGame.index].user.money;
+      var maxBid = myBid;
+      for (var i = 0; i < vm.game.currentGame.users.length; ++i)
+        maxBid = Math.max(maxBid, vm.game.currentGame.users[i].bid);
+      return (myBid === myMoney || myBid === maxBid);
     }
   }
 }());

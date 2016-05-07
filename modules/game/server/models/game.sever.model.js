@@ -100,7 +100,11 @@ SingleGameSchema.methods.bidSize = function() {
 };
 
 SingleGameSchema.methods.next = function() {
-  this.index = (this.index + 1) % this.users.length;
+  do {
+    this.index = (this.index + 1) % this.users.length;
+    if (this.bidFinished())
+      this.nextPhase();
+  } while (this.users[this.index].status === "out");
 };
 
 SingleGameSchema.methods.bidFinished = function() {
@@ -150,12 +154,12 @@ SingleGameSchema.statics.createGame = function(userIds) {
   function getCards(number, skip) {
     skip = skip || 0;
     while (skip > 0) {
-      currentCards.unshift();
+      currentCards.shift();
       skip--;
     }
     var res = [];
     while (number > 0) {
-      res.push(currentCards.unshift());
+      res.push(currentCards.shift());
       number--;
     }
     return res;
@@ -220,7 +224,7 @@ GameSchema.methods.hideImportant = function(exceptFor) {
   if (!this.currentGame)
     return;
   for (i = 0; i < this.currentGame.users.length; ++i) {
-    if (this.currentGame.users[i].user._id === exceptFor)
+    if (String(this.currentGame.users[i].user._id) === String(exceptFor))
       continue;
     this.currentGame.users[i].cards = [];
   }

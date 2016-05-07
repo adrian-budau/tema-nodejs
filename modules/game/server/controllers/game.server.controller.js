@@ -66,7 +66,7 @@ exports.create = function (req, res) {
 };
 
 exports.read = function(req, res) {
-  req.game.hideImportant();
+  req.game.hideImportant(req.user._id);
   res.json(req.game);
 };
 
