@@ -18,7 +18,12 @@
   <div class="list-group">
     <div ng-repeat="game in vm.pagedItems" ng-click="vm.spectate({gameId: game._id})" class="game-list-item list-group-item clearfix">
       <h4 class="list-group-item-heading" ng-bind="game.title"></h4>
-      <p ng-repeat="user in game.users" class="list-group-item-text pull-right small" ng-bind="user.username"></p>
+      <p class="list-group-item-text pull-right small">
+          <span>Players:&nbsp;</span>
+          <span ng-repeat="user in game.users">
+              <span ng-bind="user.username"></span> &nbsp;
+          </span>
+      </p>
       <p ng-hide="game.users.length" class="list-group-item-text pull-right small">No users in this room </p>
       <p ng-show="game.currentGame" class="list-group-item-text pull-left" style="margin-top: 0.5em">Maximum bid: {{vm.game.currentGame.currentBid()}}</p>
       <p ng-hide="game.currentGame" class="list-group-item-text pull-left" style="margin-top: 0.5em">No game currently running</p>

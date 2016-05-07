@@ -60,6 +60,9 @@ module.exports = function (io, socket) {
       goUpdate(gameId, 'leaveRoom');
       return;
     }
+
+    if (message.action === 'ready') {
+    }
   });
 
   socket.on('disconnect', function() {

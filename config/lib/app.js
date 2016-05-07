@@ -36,6 +36,13 @@ module.exports.start = function start(callback) {
   var _this = this;
 
   _this.init(function (app, db, config) {
+    var origCallback = callback;
+    callback = function(app, db, config) {
+      var setUpRooms = require('../../modules/game/server/include/room.server.include.js').setUpRooms;
+      setUpRooms();
+      if (origCallback)
+        origCallback(app, db, config);
+    };
 
     // Start the app by listening on <port> at <host>
     app.listen(config.port, config.host, function () {

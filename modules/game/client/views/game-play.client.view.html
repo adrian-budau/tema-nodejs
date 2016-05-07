@@ -5,7 +5,14 @@
           <h1 ng-bind="vm.game.title"></h1>
         </div>
         <div class="col-md-4">
-            <a ng-show="!vm.spectating()" ng-click="vm.leave()" class="btn btn-danger text-center center-block" style="margin-top: 2em;">Leave</a>
+            <div class="col-md-6">
+                <a ng-show="vm.readyButton" ng-click="vm.ready()" class="btn text-center center-block btn-success {{vm.readyButton === 'show' ? 'active' : 'disabled'}}" style="margin-top: 2em;">
+                    Ready
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a ng-show="!vm.spectating()" ng-click="vm.leave()" class="btn btn-danger text-center center-block" style="margin-top: 2em;">Leave</a>
+            </div>
         </div>
         <div class="col-md-4" style="margin-top: 2em">
             <p ng-hide="vm.game.users.length" class="list-group-item-text pull-right small">No players in this room </p>

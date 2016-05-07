@@ -15,6 +15,7 @@
     vm.spectating = spectating;
     vm.playing = playing;
     vm.leave = leave;
+    vm.ready = ready;
 
     init();
 
@@ -39,19 +40,23 @@
       });
 
       Socket.on('pokerAction', function (message) {
+        console.log(message);
         if (message.action === 'leaveRoom') {
           $state.go('game.list');
           return;
         }
 
         if (message.action === 'updateGameStatus') {
-          console.log('go update');
           GameService.get({
             gameId: vm.game._id
           }).$promise.then(function(game) {
             vm.game = game;
           });
           return;
+        }
+
+        if (message.action === "readyToPlay") {
+          vm.readyButton = 'show';
         }
       });
 
@@ -113,6 +118,10 @@
         });
         $state.go('game.list');
       });
+    }
+
+    function ready() {
+      vm.readyButton = 'pressed';
     }
   }
 }());
