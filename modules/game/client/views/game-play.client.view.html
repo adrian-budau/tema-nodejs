@@ -35,12 +35,25 @@
     </div>
   </div>
   <div class="col-md-12">
-      <div class="col-md-12">
-          {{vm.spectating() ? "Spectating" : "In Room"}}
-          <BR/>
-          {{vm.playing() ? "Playing" : "Not Playing"}}
-      </div>
     <div class="col-md-10">
+        <div class="col-md-12" ng-show="vm.playing()">
+            <h3> Cards in hand </h3>
+            <div class="game-card col-md-2" ng-repeat="card in vm.handCards()">
+                <img src="/modules/game/client/img/cards/{{card}}.png">
+            </div>
+        </div>
+        <div class="col-md-12">
+            <h3> Cards shown </h3>
+            <div class="game-card col-md-2" ng-repeat="card in vm.shownCards()">
+                <img src="/modules/game/client/img/cards/{{card}}.png">
+            </div>
+        </div>
+        <div class="col-md-12">
+            <h3> Bids </h3>
+            <div class="col-md-12" ng-repeat="user in vm.game.currentGame.users">
+                {{user.user.displayName}}: {{user.bid}}$
+            </div>
+        </div>
     </div>
     <div class="col-md-2">
         <div ng-show="vm.bidding()">

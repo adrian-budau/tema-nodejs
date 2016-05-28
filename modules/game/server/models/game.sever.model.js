@@ -212,7 +212,7 @@ SingleGameSchema.methods.winners = function() {
         i,
         fromStraight = -1;
       for (i = 1; i < 5; ++i) {
-        if (cards[i].number !== cards[i - 1].number) {
+        if (cards[i].number !== cards[i - 1].number + 1) {
           if (i === 4 && cards[i].number === 14 && cards[0].number === 2) {
             fromStraight = 1;
             break;

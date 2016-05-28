@@ -13,7 +13,7 @@
     vm.log = [];
     vm.game = game;
     vm.spectating = spectating;
-    vm.playing = playing;
+      vm.playing = playing;
     vm.leave = leave;
     vm.ready = ready;
     vm.bidding = bidding;
@@ -24,6 +24,8 @@
     vm.callPoker = callPoker;
     vm.checkPoker = checkPoker;
     vm.raisePoker = raisePoker;
+    vm.shownCards = shownCards;
+    vm.handCards = handCards;
 
     init();
 
@@ -217,6 +219,53 @@
         created: Date.now()
       });
       vm.bidAmount = 0;
+    }
+
+    function handCards() {
+      if (!vm.game.currentGame)
+        return;
+      var users = vm.game.currentGame.users;
+      var user = null;
+      var i;
+      for (i = 0; i < users.length; ++i) {
+        if (String(users[i].user._id) === String(Authentication.user._id))
+          user = users[i];
+      }
+
+      var cards = user.cards;
+      var answer = [];
+      for (i = 0; i < cards.length; ++i) {
+        answer.push(url(cards[i]));
+      }
+      return answer;
+    }
+
+    function url(card) {
+      var number = card.number;
+      var type = card.type;
+      if (number === 10)
+        number = 'T';
+      else if (number === 11)
+        number = 'J';
+      else if (number === 12)
+        number = 'Q';
+      else if (number === 13)
+        number = 'K';
+      else if (number === 14)
+        number = 'A';
+      type = type[0];
+      return number + type;
+    }
+
+    function shownCards() {
+      if (!vm.game.currentGame)
+        return;
+      var cards = vm.game.currentGame.shown;
+      var answer = [];
+      for (var i = 0; i < cards.length; ++i) {
+        answer.push(url(cards[i]));
+      }
+      return answer;
     }
   }
 }());
