@@ -96,9 +96,9 @@ SingleGameSchema.methods.winner = function() {
 };
 
 SingleGameSchema.methods.bidSize = function() {
-  return _.maxBy(this.users, function(user) {
+  return _.max(_.map(this.users, function(user) {
     return user.bid;
-  });
+  }));
 };
 
 SingleGameSchema.methods.next = function() {
@@ -168,6 +168,12 @@ function maxBetween(a, b) {
   return a;
 }
 
+function toInt(x) {
+  if (x)
+    return parseInt(x);
+  return 0;
+}
+
 /**
  * We assume this function is only called when the game is ended"
  */
@@ -177,22 +183,28 @@ SingleGameSchema.methods.winners = function() {
     return [this.winner()];
 
   // Now get the best winner
-  var inGame = _.map(this.users, function(user) {
+  var inGame = _.filter(this.users, function(user) {
     return user.status === 'in';
   });
   var game = this;
   var best = [-1],
     whom = [];
-  var power = _.map(inGame, function (user) {
-    var cards = user.cards + game.shown;
+  _.forEach(inGame, function (user) {
+    var cards = _.concat(user.cards, game.shown);
     var bestNow = [-1];
-    _.foreach(comb.combination(cards, 5), function (cards) {
+    _.forEach(comb.combination(cards, 5).toArray(), function (cards) {
+      cards = _.map(cards, function (card) {
+        return {
+          type: card.type,
+          number: parseInt(card.number)
+        };
+      });
       cards = _.orderBy(cards, function (card) {
         return card.number;
       });
 
       // now check
-      var flush = _.all(cards, function (card) {
+      var flush = _.every(cards, function (card) {
         return card.type === cards[0].type;
       });
 
@@ -214,26 +226,29 @@ SingleGameSchema.methods.winners = function() {
         return card.number;
       });
 
-      var fourKind = _.findKey(counts, function (count) {
+      var fourKind = toInt(_.findKey(counts, function (count) {
         return count === 4;
-      });
-      var threeKind = _.findKey(counts, function (count) {
+      }));
+      var threeKind = toInt(_.findKey(counts, function (count) {
         return count === 3;
-      });
+      }));
 
-      var descCards = _.orderBy(_.toPairs(counts), function (pair) {
-        return pair.first;
-      }, 'desc');
+      var descCards = _.map(_.toPairs(counts), function (pair) {
+        return [toInt(pair[0]), pair[1]];
+      });
+      descCards = _.orderBy(descCards, [0], ['desc']);
 
       var twoKinds = _.flatMap(descCards, function (pair) {
-        if (pair.second === 2)
-          return [pair.second];
+        if (pair[1] === 2)
+          return [pair[0]];
         return [];
       });
       var oneKinds = _.flatMap(descCards, function (pair) {
-        if (pair.second === 1)
-          return [pair.second];
+        if (pair[1] === 1)
+          return [pair[0]];
+        return [];
       });
+      console.log(flush, straight, fourKind, threeKind, twoKinds, oneKinds, descCards, counts);
 
       if (straight && fromStraight === -1)
         fromStraight = cards[0].number;
@@ -247,17 +262,17 @@ SingleGameSchema.methods.winners = function() {
       } else if (threeKind && _.size(twoKinds)) { // full house
         now = [7, threeKind, twoKinds[0]];
       } else if (flush) {
-        now = [6] + oneKinds;
+        now = _.concat([6], oneKinds);
       } else if (straight) {
         now = [5, fromStraight];
       } else if (threeKind) {
-        now = [4, threeKind] + oneKinds;
+        now = _.concat([4, threeKind], oneKinds);
       } else if (_.size(twoKinds) === 2) {
-        now = [3] + twoKinds + oneKinds;
+        now = _.concat([3], twoKinds, oneKinds);
       } else if (_.size(twoKinds)) {
-        now = [2] + twoKinds + oneKinds;
+        now = _.concat([2], twoKinds, oneKinds);
       } else {
-        now = [1] + oneKinds;
+        now = _.concat([1], oneKinds);
       }
       bestNow = maxBetween(bestNow, now);
     });
@@ -268,6 +283,7 @@ SingleGameSchema.methods.winners = function() {
       whom = [user.user._id];
     }
   });
+  console.log(best, ' for ', whom);
 
   return whom;
 };

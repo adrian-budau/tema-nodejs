@@ -216,6 +216,7 @@
         value: vm.bidAmount,
         created: Date.now()
       });
+      vm.bidAmount = 0;
     }
   }
 }());

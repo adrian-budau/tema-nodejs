@@ -81,7 +81,7 @@ function myTurn(game, userId) {
 
 function saveMoney(game, cb) {
   if (game.currentGame.phase !== "end" && game.currentGame.phase !== 'foldWinner') {
-    // Nothing to save, now winner yet
+    // Nothing to save, no winner yet
     cb(null);
   } else {
     var winners = game.currentGame.winners();
@@ -131,6 +131,105 @@ function fold(roomId, userId) {
     console.log(game.currentGame);
     game.save(function() {
       saveMoney(game, function(winners) {
+        restartRoom(roomId);
+        if (winners) {
+          Events.emit(game._id, {
+            action: 'gameEnded',
+            winners: winners,
+            created: Date.now
+          });
+        } else {
+          Events.goUpdate(game._id, 'play');
+        }
+      });
+    });
+  });
+}
+
+function raise(roomId, userId, value) {
+  console.log('Raising ', value, ' in ', roomId, ' by ', userId);
+  getGame(roomId).then(function(game) {
+    if (!myTurn(game, userId)) {
+      console.log('Not my turn to raise');
+      return;
+    }
+    if (!_.isNumber(value) || value <= 0)
+      return; // no op
+    var myMoney = game.currentGame.users[game.currentGame.index].user.money;
+    var need = game.currentGame.bidSize() + value;
+
+    console.log(myMoney, ' vs ', need);
+    if (myMoney < need) {
+      console.log('Not enough money');
+      return;
+    }
+
+    game.currentGame.users[game.currentGame.index].bid = need;
+    game.currentGame.firstCall = game.currentGame.index;
+    game.currentGame.next();
+    game.save(function() {
+      restartRoom(roomId);
+      Events.goUpdate(game._id, 'play');
+    });
+  });
+}
+
+function call(roomId, userId) {
+  console.log('Calling in ', roomId, ' by ', userId);
+  getGame(roomId).then(function(game) {
+    if (!myTurn(game, userId)) {
+      console.log('Not my turn to call');
+      return;
+    }
+
+    var myMoney = game.currentGame.users[game.currentGame.index].user.money;
+    var need = game.currentGame.bidSize();
+    if (myMoney < need)
+      need = myMoney;
+    if (game.currentGame.firstCall === -1)
+      game.currentGame.firstCall = game.currentGame.index;
+    game.currentGame.users[game.currentGame.index].bid = need;
+    game.currentGame.next();
+    game.save(function() {
+      saveMoney(game, function(winners) {
+        restartRoom(roomId);
+        if (winners) {
+          Events.emit(game._id, {
+            action: 'gameEnded',
+            winners: winners,
+            created: Date.now
+          });
+        } else {
+          Events.goUpdate(game._id, 'play');
+        }
+      });
+    });
+  });
+}
+
+function check(roomId, userId) {
+  console.log('Checking in ', roomId, ' by ', userId);
+  getGame(roomId).then(function(game) {
+    if (!myTurn(game, userId)) {
+      console.log('Not my turn to check');
+      return;
+    }
+
+    var myMoney = game.currentGame.users[game.currentGame.index].user.money;
+    var need = game.currentGame.bidSize();
+    if (myMoney < need)
+      need = myMoney;
+    var myBid = game.currentGame.users[game.currentGame.index].bid;
+    if (myBid < need) {
+      console.log('Not allowed to check, have to call');
+      return; // no-op
+    }
+    if (game.currentGame.firstCall === -1)
+      game.currentGame.firstCall = game.currentGame.index;
+    game.currentGame.next();
+    game.save(function() {
+      saveMoney(game, function(winners) {
+        restartRoom(roomId);
         if (winners) {
           Events.emit(game._id, {
             action: 'gameEnded',
@@ -147,7 +246,20 @@ function fold(roomId, userId) {
 
 function startRoom(roomId) {
   Events.emitter.on(roomId, updateRoom);
-  roomTimer[roomId] = setInterval(nextPhase(roomId), 5000);
+  roomTimer[roomId] = setInterval(nextPhase(roomId), 10000);
+}
+
+function stopRoom(roomId) {
+  clearInterval(roomTimer[roomId]);
+}
+
+function startTimerRoom(roomId) {
+  roomTimer[roomId] = setInterval(nextPhase(roomId), 10000);
+}
+
+function restartRoom(roomId) {
+  stopRoom(roomId);
+  startTimerRoom(roomId);
 }
 
 module.exports = {
@@ -164,5 +276,8 @@ module.exports = {
     roomReady[roomId] = roomReady[roomId] || [];
     roomReady[roomId] = _.union(roomReady[roomId], [userId]);
   },
-  fold: fold
+  fold: fold,
+  raise: raise,
+  call: call,
+  check: check
 };

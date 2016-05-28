@@ -83,6 +83,7 @@ module.exports = function (io, socket) {
     }
 
     if (message.action === 'raise') {
+      console.log(message.value);
       Rooms.raise(gameId, socket.request.user._id, message.value);
       return;
     }
