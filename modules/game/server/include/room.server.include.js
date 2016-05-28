@@ -24,9 +24,13 @@ function setUpRooms() {
   });
 }
 
+function getGame(roomId) {
+  return Game.findOne({ _id: roomId }).deepPopulate('users spectators currentGame.users.user');
+}
+
 function nextPhase(roomId) {
   return function() {
-    Game.findOne({ _id: roomId }).deepPopulate('users spectators currentGame.users.user').then(function(game) {
+    getGame(roomId).then(function(game) {
       if (!game.currentGame) { // we're in ready phase
         var readyUsers = _.map(roomReady[roomId] || [], String);
         var gameUsers = _.map(game.users, function (user) {
@@ -61,6 +65,42 @@ function nextPhase(roomId) {
   };
 }
 
+function myTurn(game, userId) {
+  return game.currentGame.users[game.currentGame.index]._id === userId;
+}
+
+function saveMoney(game, cb) {
+  if (game.currentGame.phase !== "end" && game.currentGame.phase !== 'foldWinner') {
+    // Nothing to save, now winner yet
+    cb(null);
+  } else {
+    // there must be some winners
+    cb(game.currentGame.winners());
+  }
+}
+
+function fold(roomId, userId) {
+  getGame(roomId).then(function(game) {
+    if (!myTurn(game, userId))
+      return;
+    game.currentGame.users[game.currentGame.index].status = 'out';
+    game.currentGame.next();
+    game.save(function() {
+      saveMoney(game, function(winners) {
+        if (winners) {
+          Events.emit(game._id, {
+            action: 'gameEnded',
+            winners: winners,
+            created: Date.now
+          });
+        } else {
+          Events.goUpdate(game._id, 'play');
+        }
+      });
+    });
+  });
+}
+
 function startRoom(roomId) {
   Events.emitter.on(roomId, updateRoom);
   roomTimer[roomId] = setInterval(nextPhase(roomId), 5000);
@@ -79,5 +119,6 @@ module.exports = {
   readyFor: function (roomId, userId) {
     roomReady[roomId] = roomReady[roomId] || [];
     roomReady[roomId] = _.union(roomReady[roomId], [userId]);
-  }
+  },
+  fold: fold
 };

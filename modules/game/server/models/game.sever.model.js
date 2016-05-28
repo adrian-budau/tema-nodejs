@@ -7,6 +7,8 @@ var mongoose = require('mongoose'),
   _ = require('lodash'),
   Schema = mongoose.Schema;
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
+var assert = require('assert');
+var comb = require('js-combinatorics');
 
 /**
  * User Schema
@@ -55,7 +57,7 @@ var SingleGameSchema = new Schema({
 
   phase: {
     type: String,
-    enum: ['bid1', 'bid2', 'bid3', 'bid4', 'end']
+    enum: ['bid1', 'bid2', 'bid3', 'bid4', 'end', 'foldWinner']
   },
 
   phaseStarted: {
@@ -104,7 +106,9 @@ SingleGameSchema.methods.next = function() {
     this.index = (this.index + 1) % this.users.length;
     if (this.bidFinished())
       this.nextPhase();
-  } while (this.users[this.index].status === "out");
+  } while (this.users[this.index].status === 'out');
+  if (this.winner())
+    this.phase = 'foldWinner';
 };
 
 SingleGameSchema.methods.bidFinished = function() {
@@ -148,6 +152,124 @@ for (var i = 2; i < 15; ++i) {
     cards.push(new Card({ number: i, type: types[j] }));
   }
 }
+
+function compare(a, b) {
+  for (var i = 0; i < a.length; ++i)
+    if (a[i] > b[i])
+      return 1;
+    else if (b[i] > a[i])
+      return -1;
+  return 0;
+}
+
+function maxBetween(a, b) {
+  if (compare(a, b) === -1)
+    return b;
+  return a;
+}
+
+/**
+ * We assume this function is only called when the game is ended"
+ */
+SingleGameSchema.methods.winners = function() {
+  assert(this.phase === 'end' || this.phase === 'foldWinner');
+  if (this.winner())
+    return [this.winner()];
+
+  // Now get the best winner
+  var inGame = _.map(this.users, function(user) {
+    return user.status === 'in';
+  });
+  var game = this;
+  var best = [-1],
+    whom = [];
+  var power = _.map(inGame, function (user) {
+    var cards = user.cards + game.shown;
+    var bestNow = [-1];
+    _.foreach(comb.combination(cards, 5), function (cards) {
+      cards = _.orderBy(cards, function (card) {
+        return card.number;
+      });
+
+      // now check
+      var flush = _.all(cards, function (card) {
+        return card.type === cards[0].type;
+      });
+
+      var straight = true,
+        i,
+        fromStraight = -1;
+      for (i = 1; i < 5; ++i) {
+        if (cards[i].number !== cards[i - 1].number) {
+          if (i === 4 && cards[i].number === 14 && cards[0].number === 2) {
+            fromStraight = 1;
+            break;
+          }
+          straight = false;
+          break;
+        }
+      }
+
+      var counts = _.countBy(cards, function (card) {
+        return card.number;
+      });
+
+      var fourKind = _.findKey(counts, function (count) {
+        return count === 4;
+      });
+      var threeKind = _.findKey(counts, function (count) {
+        return count === 3;
+      });
+
+      var descCards = _.orderBy(_.toPairs(counts), function (pair) {
+        return pair.first;
+      }, 'desc');
+
+      var twoKinds = _.flatMap(descCards, function (pair) {
+        if (pair.second === 2)
+          return [pair.second];
+        return [];
+      });
+      var oneKinds = _.flatMap(descCards, function (pair) {
+        if (pair.second === 1)
+          return [pair.second];
+      });
+
+      if (straight && fromStraight === -1)
+        fromStraight = cards[0].number;
+      var now = [];
+      if (flush && straight && fromStraight === 10)
+        now = [10];
+      else if (flush && straight)
+        now = [9, fromStraight];
+      else if (fourKind) {
+        now = [8, fourKind, oneKinds[0]];
+      } else if (threeKind && _.size(twoKinds)) { // full house
+        now = [7, threeKind, twoKinds[0]];
+      } else if (flush) {
+        now = [6] + oneKinds;
+      } else if (straight) {
+        now = [5, fromStraight];
+      } else if (threeKind) {
+        now = [4, threeKind] + oneKinds;
+      } else if (_.size(twoKinds) === 2) {
+        now = [3] + twoKinds + oneKinds;
+      } else if (_.size(twoKinds)) {
+        now = [2] + twoKinds + oneKinds;
+      } else {
+        now = [1] + oneKinds;
+      }
+      bestNow = maxBetween(bestNow, now);
+    });
+    if (compare(best, bestNow) === 0)
+      whom += [user.user];
+    else if (compare(best, bestNow) === -1) {
+      best = bestNow;
+      whom = [user.user];
+    }
+  });
+  return whom;
+};
 
 SingleGameSchema.statics.createGame = function(userIds) {
   var currentCards = _.shuffle(cards);

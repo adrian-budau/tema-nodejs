@@ -19,6 +19,9 @@
     vm.bidding = bidding;
     vm.canCheck = canCheck;
 
+
+    vm.foldPoker = foldPoker;
+
     init();
 
     function init() {
@@ -164,6 +167,14 @@
       for (var i = 0; i < vm.game.currentGame.users.length; ++i)
         maxBid = Math.max(maxBid, vm.game.currentGame.users[i].bid);
       return (myBid === myMoney || myBid === maxBid);
+    }
+
+    function foldPoker() {
+      Socket.emit('pokerAction', {
+        id: game._id,
+        action: 'fold',
+        created: Date.now()
+      });
     }
   }
 }());

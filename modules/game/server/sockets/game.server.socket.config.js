@@ -66,6 +66,11 @@ module.exports = function (io, socket) {
       Rooms.readyFor(gameId, socket.request.user._id);
       return;
     }
+
+    if (message.action === 'fold') {
+      Rooms.fold(gameId, socket.request.user._id);
+      return;
+    }
   });
 
   socket.on('disconnect', function() {
