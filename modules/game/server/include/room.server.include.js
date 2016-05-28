@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var Game = mongoose.model('Game');
 var SingleGame = mongoose.model('SingleGame');
 var _ = require('lodash');
+var User = mongoose.model('User');
 
 var roomCount = {};
 var roomTimer = {};
@@ -60,13 +61,22 @@ function nextPhase(roomId) {
             created: Date.now()
           });
         }
+      } else if (game.currentGame.phase === 'foldWinner' || game.currentGame.phase === 'end') {
+        // ah well, we restart
+        game.currentGame = null;
+        game.save(function() {
+          return Events.emit(game._id, {
+            action: 'gameEnded',
+            created: Date.now()
+          });
+        });
       }
     });
   };
 }
 
 function myTurn(game, userId) {
-  return game.currentGame.users[game.currentGame.index]._id === userId;
+  return game.currentGame.users[game.currentGame.index].user._id.toString() === userId.toString();
 }
 
 function saveMoney(game, cb) {
@@ -74,17 +84,51 @@ function saveMoney(game, cb) {
     // Nothing to save, now winner yet
     cb(null);
   } else {
-    // there must be some winners
-    cb(game.currentGame.winners());
+    var winners = game.currentGame.winners();
+    var change = {
+    };
+    var i;
+    for (i = 0; i < game.currentGame.users.length; ++i)
+      change[game.currentGame.users[i].user._id] = 0;
+
+    for (i = 0; i < game.currentGame.users.length; ++i) {
+      var user = game.currentGame.users[i];
+      var ifWinner = _.find(winners, user.user._id);
+      change[user.user._id] -= user.bid;
+      for (var j = 0; j < winners.length; ++j)
+        change[winners[j]] += user.bid / winners.length;
+    }
+
+
+    change = _.toPairs(change);
+
+    function saveMoney(changes) {
+      if (_.size(changes) === 0) {
+        // there must be some winners
+        cb(game.currentGame.winners());
+      } else {
+        User.findById(changes[0][0]).then(function(user) {
+          user.money += changes[0][1];
+          user.save(function () {
+            saveMoney(_.tail(changes));
+          });
+        });
+      }
+    }
+    saveMoney(change);
   }
 }
 
 function fold(roomId, userId) {
+  console.log('Folding in ', roomId, ' by ', userId);
   getGame(roomId).then(function(game) {
-    if (!myTurn(game, userId))
+    if (!myTurn(game, userId)) {
+      console.log('Not my turn to fold');
       return;
+    }
     game.currentGame.users[game.currentGame.index].status = 'out';
     game.currentGame.next();
+    console.log(game.currentGame);
     game.save(function() {
       saveMoney(game, function(winners) {
         if (winners) {

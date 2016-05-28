@@ -86,7 +86,7 @@ SingleGameSchema.methods.winner = function() {
   for (var i = 0; i < this.users.length; ++i) {
     if (this.users[i].status === 'in') {
       if (winner === null) {
-        winner = this.users[i].id;
+        winner = this.users[i].user._id;
       } else {
         return null;
       }
@@ -262,12 +262,13 @@ SingleGameSchema.methods.winners = function() {
       bestNow = maxBetween(bestNow, now);
     });
     if (compare(best, bestNow) === 0)
-      whom += [user.user];
+      whom += [user.user._id];
     else if (compare(best, bestNow) === -1) {
       best = bestNow;
-      whom = [user.user];
+      whom = [user.user._id];
     }
   });
+
   return whom;
 };
 

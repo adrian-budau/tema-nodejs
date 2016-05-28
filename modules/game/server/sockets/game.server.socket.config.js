@@ -71,6 +71,21 @@ module.exports = function (io, socket) {
       Rooms.fold(gameId, socket.request.user._id);
       return;
     }
+
+    if (message.action === 'check') {
+      Rooms.check(gameId, socket.request.user._id);
+      return;
+    }
+
+    if (message.action === 'call') {
+      Rooms.call(gameId, socket.request.user._id);
+      return;
+    }
+
+    if (message.action === 'raise') {
+      Rooms.raise(gameId, socket.request.user._id, message.value);
+      return;
+    }
   });
 
   socket.on('disconnect', function() {

@@ -4,7 +4,8 @@ var path = require('path'),
   Game = mongoose.model('Game'),
   User = mongoose.model('User'),
   errorHandler = require(path.resolve('./modules/core/server/controllers/errors.server.controller')),
-  Events = require('../include/events.server.include.js');
+  Events = require('../include/events.server.include.js'),
+  Room = require('../include/room.server.include.js');
 
 /**
  * List of Games
@@ -60,6 +61,7 @@ exports.create = function (req, res) {
         message: errorHandler.getErrorMessage(err)
       });
     } else {
+      Room.startRoom(game._id);
       res.json(game);
     }
   });

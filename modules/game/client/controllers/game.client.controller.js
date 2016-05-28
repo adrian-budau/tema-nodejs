@@ -21,6 +21,9 @@
 
 
     vm.foldPoker = foldPoker;
+    vm.callPoker = callPoker;
+    vm.checkPoker = checkPoker;
+    vm.raisePoker = raisePoker;
 
     init();
 
@@ -75,6 +78,17 @@
           }).$promise.then(function(game) {
             vm.game = game;
           });
+          vm.readyButton = null;
+        }
+
+        if (message.action === "gameEnded") {
+          // money got distributed
+          GameService.get({
+            gameId: vm.game._id
+          }).$promise.then(function (game) {
+            vm.game = game;
+          });
+          location.reload();
           vm.readyButton = null;
         }
       });
@@ -133,6 +147,8 @@
     function bidding() {
       if (!playing())
         return false;
+      if (vm.game.currentGame.phase === 'foldWinner' || vm.game.currentGame.phase === 'end')
+        return false;
       var currentUser = vm.game.currentGame.users[vm.game.currentGame.index].user;
       return currentUser._id === Authentication.user._id;
     }
@@ -173,6 +189,31 @@
       Socket.emit('pokerAction', {
         id: game._id,
         action: 'fold',
+        created: Date.now()
+      });
+    }
+
+    function callPoker() {
+      Socket.emit('pokerAction', {
+        id: game._id,
+        action: 'call',
+        created: Date.now()
+      });
+    }
+
+    function checkPoker() {
+      Socket.emit('pokerAction', {
+        id: game._id,
+        action: 'check',
+        created: Date.now()
+      });
+    }
+
+    function raisePoker() {
+      Socket.emit('pokerAction', {
+        id: game._id,
+        action: 'raise',
+        value: vm.bidAmount,
         created: Date.now()
       });
     }

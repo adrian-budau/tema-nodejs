@@ -45,7 +45,7 @@
     <div class="col-md-2">
         <div ng-show="vm.bidding()">
             <div class="input-group">
-                <input type="number" ng-model="bidAmount" class="form-control" placeholder="Bid Amount">
+                <input type="number" ng-model="vm.bidAmount" class="form-control" placeholder="Bid Amount">
                 <span class="input-group-addon">$</span>
             </div>
             <a class="btn btn-success col-md-12 poker-button" ng-click="vm.raisePoker()">Raise</a>
